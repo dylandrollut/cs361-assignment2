@@ -41,6 +41,12 @@ unsigned char inv_s[256] =
     0x17, 0x2B, 0x04, 0x7E, 0xBA, 0x77, 0xD6, 0x26, 0xE1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0C, 0x7D
  };
 
+void copyString(char* string, char* copy){
+	for(int i = 0; i < 16; i++){
+		copy[i] = string[i];
+	}
+}
+
 void keyExpansion(){
 
 }
@@ -56,7 +62,33 @@ void subBytes(unsigned char* state){
 }
 
 void shiftRows(unsigned char* state){
+	unsigned char tmp[16];
 
+	// first column
+	tmp[0] = state[0];
+	tmp[1] = state[5];
+	tmp[2] = state[10];
+	tmp[3] = state[15];
+
+	// second column
+	tmp[4] = state[4];
+	tmp[5] = state[9];
+	tmp[6] = state[14];
+	tmp[7] = state[3];
+
+	// third column
+	tmp[8] = state[8];
+	tmp[9] = state[13];
+	tmp[10] = state[2];
+	tmp[11] = state[7];
+
+	// fourth column
+	tmp[12] = state[12];
+	tmp[13] = state[1];
+	tmp[14] = state[6];
+	tmp[15] = state[11];
+
+	copyString(tmp, state);
 }
 
 void mixColumns(){
@@ -66,9 +98,7 @@ void mixColumns(){
 void encrypt(unsigned char* message, unsigned char* key){
 
 	unsigned char state[16];
-	for(int i = 0; i < 16; i++){
-		state[i] = message[i];
-	}
+	copyString(message, state);
 
 	keyExpansion();
 
