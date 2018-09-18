@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 // look up tables from wikipedia
 unsigned char s[256] = {
@@ -330,7 +331,7 @@ void encryptBlock(unsigned char* message, unsigned char* key, int algoNumRounds)
 
 int main(){
 
-	unsigned char message[] = "Hello, World!!!!";
+	unsigned char message[] = "Hello, World!!!!!";
 	unsigned char key[16] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p'};
 
 	int numWords = 4;
@@ -339,10 +340,29 @@ int main(){
 
 	keyExpansion(key, expandedKeys, numWords, numRounds);
 
-	encryptBlock(message, expandedKeys, numRounds);
+	//message padding
+	int messageLength = strlen(message);
+	int paddedLength = messageLength;
 
-	for(int i = 0; i < 16; i++){
-		printf("%x ", message[i]);
+	if(paddedLength % 16 != 0){
+		paddedLength = (paddedLength / 16 + 1) * 16;
+	}
+
+	unsigned char paddedMessage[paddedLength];
+
+	for(int i = 0; i < paddedLength; i++){
+		if(i < messageLength){
+			paddedMessage[i] = message[i];
+		} else {
+			paddedMessage[i] = 0;
+		}
+	}
+
+	for(int i = 0; i < (paddedLength/16); i++)
+		encryptBlock(paddedMessage + (16*i), expandedKeys, numRounds);
+
+	for(int i = 0; i < paddedLength; i++){
+		printf("%x ", paddedMessage[i]);
 	}
 	printf("\n");
 }
