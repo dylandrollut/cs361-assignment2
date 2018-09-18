@@ -205,8 +205,31 @@ void shiftRows(unsigned char* state){
 	copyString(tmp, state);
 }
 
-void mixColumns(){
+void mixColumns(unsigned char* state){
 
+	unsigned char tmp[16];
+
+	tmp[0] = (galoisMulti2[state[0]] ^ galoisMulti3[state[1]] ^ state[2] ^ state[3]);
+	tmp[1] = (state[0] ^ galoisMulti2[state[1]] ^ galoisMulti3[state[2]] ^ state[3]);
+	tmp[2] = (state[0] ^ state[1] ^ galoisMulti2[state[2]] ^ galoisMulti3[state[3]]);
+	tmp[3] = (galoisMulti3[state[0]] ^ state[1] ^ state[2] ^ galoisMulti2[state[3]]);
+
+	tmp[4] = (galoisMulti2[state[4]] ^ galoisMulti3[state[5]] ^ state[6] ^ state[7]);
+	tmp[5] = (state[4] ^ galoisMulti2[state[5]] ^ galoisMulti3[state[6]] ^ state[7]);
+	tmp[6] = (state[4] ^ state[5] ^ galoisMulti2[state[6]] ^ galoisMulti3[state[7]]);
+	tmp[7] = (galoisMulti3[state[4]] ^ state[5] ^ state[6] ^ galoisMulti2[state[7]]);
+
+	tmp[8] = (galoisMulti2[state[8]] ^ galoisMulti3[state[9]] ^ state[10] ^ state[11]);
+	tmp[9] = (state[8] ^ galoisMulti2[state[9]] ^ galoisMulti3[state[10]] ^ state[11]);
+	tmp[10] = (state[8] ^ state[9] ^ galoisMulti2[state[10]] ^ galoisMulti3[state[11]]);
+	tmp[11] = (galoisMulti3[state[8]] ^ state[9] ^ state[10] ^ galoisMulti2[state[11]]);
+
+	tmp[12] = (galoisMulti2[state[12]] ^ galoisMulti3[state[13]] ^ state[14] ^ state[15]);
+	tmp[13] = (state[12] ^ galoisMulti2[state[13]] ^ galoisMulti3[state[14]] ^ state[15]);
+	tmp[14] = (state[12] ^ state[13] ^ galoisMulti2[state[14]] ^ galoisMulti3[state[15]]);
+	tmp[15] = (galoisMulti3[state[12]] ^ state[13] ^ state[14] ^ galoisMulti2[state[15]]);
+
+	copyString(tmp, state);
 }
 
 void encryptBlock(unsigned char* message, unsigned char* key){
@@ -224,7 +247,7 @@ void encryptBlock(unsigned char* message, unsigned char* key){
 	for(int i = 0; i < numRounds; i++){
 		subBytes(state);
 		shiftRows(state);
-		mixColumns();
+		mixColumns(state);
 		addRoundKey(state, key);
 	}
 
