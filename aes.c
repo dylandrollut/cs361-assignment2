@@ -170,7 +170,7 @@ unsigned char rcon[256] = {
 	0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 
 	0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 
 	0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d
-}
+};
 
 void copyString(char* string, char* copy){
 	for(int i = 0; i < 16; i++){
@@ -199,8 +199,39 @@ void keyExpansionCore(unsigned char* in, unsigned char i){
 
 }
 
-void keyExpansion(){
+void keyExpansion(unsigned char* key, unsigned char* expandedKeys, int numWords, int numRounds){
 
+	int numKeyBytes = numWords * 4;
+
+	for(int i = 0; i < numKeyBytes; i++){
+		expandedKeys[i] = key[i];
+	}
+
+	int bytesGenerated = numWords * 4;
+	int rconIteration = 1;
+	unsigned char tmp[4];
+
+	while(bytesGenerated < 16*(numRounds + 1)){
+
+		for(int i = 0; i < 4; i++){
+			tmp[i] = expandedKeys[i + bytesGenerated - 4];
+		}
+
+		if(bytesGenerated % numKeyBytes == 0){
+			keyExpansionCore(tmp, rconIteration);
+			rconIteration++;
+		} else if(numWords == 8 && bytesGenerated % numKeyBytes == 16){
+			tmp[0] = s[tmp[0]];
+			tmp[1] = s[tmp[1]];
+			tmp[2] = s[tmp[2]];
+			tmp[3] = s[tmp[3]];
+		}
+
+		for(int i = 0; i < 4; i++){
+			expandedKeys[bytesGenerated] = expandedKeys[bytesGenerated - numKeyBytes] ^ tmp[i];
+			bytesGenerated++;
+		}
+	}
 }
 
 void addRoundKey(unsigned char* state, unsigned char* roundKey){
@@ -272,7 +303,7 @@ void mixColumns(unsigned char* state){
 	copyString(tmp, state);
 }
 
-void encryptBlock(unsigned char* message, unsigned char* key){
+void encryptBlock(unsigned char* message, unsigned char* key, int algoNumRounds){
 
 	unsigned char state[16];
 	copyString(message, state);
@@ -280,19 +311,21 @@ void encryptBlock(unsigned char* message, unsigned char* key){
 	// initial round
 	addRoundKey(state, key);
 
-	int numRounds = 1;
+	int numRounds = algoNumRounds - 1;
 
 	for(int i = 0; i < numRounds; i++){
 		subBytes(state);
 		shiftRows(state);
 		mixColumns(state);
-		addRoundKey(state, key);
+		addRoundKey(state, key + (16 * (i + 1)));
 	}
 
 	//final round
 	subBytes(state);
 	shiftRows(state);
-	addRoundKey(state, key);
+	addRoundKey(state, key + (algoNumRounds * 16));
+
+	copyString(state, message);
 }
 
 int main(){
@@ -300,9 +333,16 @@ int main(){
 	unsigned char message[] = "Hello, World!!!!";
 	unsigned char key[16] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p'};
 
-	unsigned char expandedKey[16*11];
+	int numWords = 4;
+	int numRounds = 10;
+	unsigned char expandedKeys[(numRounds + 1)*16];
 
-	keyExpansion();
+	keyExpansion(key, expandedKeys, numWords, numRounds);
 
-	encryptBlock(message, key);
+	encryptBlock(message, expandedKeys, numRounds);
+
+	for(int i = 0; i < 16; i++){
+		printf("%x ", message[i]);
+	}
+	printf("\n");
 }
