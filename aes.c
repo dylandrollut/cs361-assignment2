@@ -247,6 +247,12 @@ void subBytes(unsigned char* state){
 	}
 }
 
+void invSubBytes(unsigned char* state){
+	for(int i 0; i < 16; i++){
+		state[i] = inv_s[state[i]];
+	}
+}
+
 void shiftRows(unsigned char* state){
 	unsigned char tmp[16];
 
@@ -273,6 +279,36 @@ void shiftRows(unsigned char* state){
 	tmp[13] = state[1];
 	tmp[14] = state[6];
 	tmp[15] = state[11];
+
+	copyString(tmp, state);
+}
+
+void invShiftRows(unsigned char* state){
+	unsigned char tmp[16];
+
+	//first column
+	tmp[0] = state[0];
+	tmp[1] = state[13];
+	tmp[2] = state[10];
+	tmp[3] = state[7];
+
+	//second column
+	tmp[4] = state[4];
+	tmp[5] = state[1];
+	tmp[6] = state[14];
+	tmp[7] = state[11];
+
+	//third column
+	tmp[8] = state[8];
+	tmp[9] = state[5];
+	tmp[10] = state[2];
+	tmp[11] = state[15];
+
+	//fourth column
+	tmp[12] = state[12];
+	tmp[13] = state[9];
+	tmp[14] = state[6];
+	tmp[15] = state[3];
 
 	copyString(tmp, state);
 }
@@ -340,14 +376,14 @@ void decryptBlock(unsigned char* message, unsigned char* key, int algoNumRounds)
 	addRoundKey(state, key + roundKeyIndex);
 
 	for(int i = 0; i < numRounds; i++){
-		//invShiftRows(state);
-		//invSubBytes(state);
+		invShiftRows(state);
+		invSubBytes(state);
 		addRoundKey(state, key + (roundKeyIndex - (16 * (i + 1))));
 		//invMixColumns(state);
 	}
 
-	//invShiftRows(state);
-	//invSubBytes(state);
+	invShiftRows(state);
+	invSubBytes(state);
 	addRoundKey(state, key);
 }
 
