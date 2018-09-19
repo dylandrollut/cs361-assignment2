@@ -340,6 +340,33 @@ void mixColumns(unsigned char* state){
 	copyString(tmp, state);
 }
 
+void invMixColumns(unsigned char* state){
+	
+	unsigned char tmp[16];
+
+	tmp[0] = (galoisMulti14[state[0]] ^ galoisMulti11[state[1]] ^ galoisMulti13[state[2]] ^ galoisMulti9[state[3]]);
+	tmp[1] = (galoisMulti9[state[0]] ^ galoisMulti14[state[1]] ^ galoisMulti11[state[2]] ^ galoisMulti13[state[3]]);
+	tmp[2] = (galoisMulti13[state[0]] ^ galoisMulti9[state[1]] ^ galoisMulti14[state[2]] ^ galoisMulti11[state[3]]);
+	tmp[3] = (galoisMulti11[state[0]] ^ galoisMulti13[state[1]] ^ galoisMulti9[state[2]] ^ galoisMulti14[state[3]]);
+
+	tmp[4] = (galoisMulti14[state[4]] ^ galoisMulti11[state[5]] ^ galoisMulti13[state[6]] ^ galoisMulti9[state[7]]);
+	tmp[5] = (galoisMulti9[state[4]] ^ galoisMulti14[state[5]] ^ galoisMulti11[state[6]] ^ galoisMulti13[state[7]]);
+	tmp[6] = (galoisMulti13[state[4]] ^ galoisMulti9[state[5]] ^ galoisMulti14[state[6]] ^ galoisMulti11[state[7]]);
+	tmp[7] = (galoisMulti11[state[4]] ^ galoisMulti13[state[5]] ^ galoisMulti9[state[6]] ^ galoisMulti14[state[7]]);
+
+	tmp[8] = (galoisMulti14[state[8]] ^ galoisMulti11[state[9]] ^ galoisMulti13[state[10]] ^ galoisMulti9[state[11]]);
+	tmp[9] = (galoisMulti9[state[8]] ^ galoisMulti14[state[9]] ^ galoisMulti11[state[10]] ^ galoisMulti13[state[11]]);
+	tmp[10] = (galoisMulti13[state[8]] ^ galoisMulti9[state[9]] ^ galoisMulti14[state[10]] ^ galoisMulti11[state[11]]);
+	tmp[11] = (galoisMulti11[state[8]] ^ galoisMulti13[state[9]] ^ galoisMulti9[state[10]] ^ galoisMulti14[state[11]]);
+
+	tmp[12] = (galoisMulti14[state[12]] ^ galoisMulti11[state[13]] ^ galoisMulti13[state[14]] ^ galoisMulti9[state[15]]);
+	tmp[13] = (galoisMulti9[state[12]] ^ galoisMulti14[state[13]] ^ galoisMulti11[state[14]] ^ galoisMulti13[state[15]]);
+	tmp[14] = (galoisMulti13[state[12]] ^ galoisMulti9[state[13]] ^ galoisMulti14[state[14]] ^ galoisMulti11[state[15]]);
+	tmp[15] = (galoisMulti11[state[12]] ^ galoisMulti13[state[13]] ^ galoisMulti9[state[14]] ^ galoisMulti14[state[15]]);
+
+	copyString(tmp, state);
+}
+
 void encryptBlock(unsigned char* message, unsigned char* key, int algoNumRounds){
 
 	unsigned char state[16];
@@ -379,7 +406,7 @@ void decryptBlock(unsigned char* message, unsigned char* key, int algoNumRounds)
 		invShiftRows(state);
 		invSubBytes(state);
 		addRoundKey(state, key + (roundKeyIndex - (16 * (i + 1))));
-		//invMixColumns(state);
+		invMixColumns(state);
 	}
 
 	invShiftRows(state);
@@ -416,11 +443,11 @@ int main(){
 		}
 	}
 
-	//for(int i = 0; i < paddedLength; i += 16)
-	//	encryptBlock(paddedMessage + i, expandedKeys, numRounds);
+	for(int i = 0; i < paddedLength; i += 16)
+		encryptBlock(paddedMessage + i, expandedKeys, numRounds);
 
 	//for(int i = 0; i < paddedLength; i++){
 	//	printf("%x ", paddedMessage[i]);
 	//}
-	//printf("%s\n", paddedMessage);
+	printf("%s\n", paddedMessage);
 }
