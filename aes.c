@@ -248,7 +248,7 @@ void subBytes(unsigned char* state){
 }
 
 void invSubBytes(unsigned char* state){
-	for(int i 0; i < 16; i++){
+	for(int i = 0; i < 16; i++){
 		state[i] = inv_s[state[i]];
 	}
 }
@@ -412,12 +412,14 @@ void decryptBlock(unsigned char* message, unsigned char* key, int algoNumRounds)
 	invShiftRows(state);
 	invSubBytes(state);
 	addRoundKey(state, key);
+
+	copyString(state, message);
 }
 
 int main(){
 
-	unsigned char message[] = "Hello, World!!!!";
-	unsigned char key[] = "abcdefghijklmnop";
+	unsigned char message[] = {0x31, 0xc4, 0x47, 0xb7, 0xe0, 0xaf, 0xbd, 0x33, 0xed, 0xf9, 0x14, 0x25, 0x97, 0x38, 0x8c, 0xd6};//"Hello, World!!!!";
+	unsigned char key[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 
 	int numWords = 4;
 	int numRounds = 10;
@@ -444,10 +446,10 @@ int main(){
 	}
 
 	for(int i = 0; i < paddedLength; i += 16)
-		encryptBlock(paddedMessage + i, expandedKeys, numRounds);
+		decryptBlock(paddedMessage + i, expandedKeys, numRounds);
 
-	//for(int i = 0; i < paddedLength; i++){
-	//	printf("%x ", paddedMessage[i]);
-	//}
-	printf("%s\n", paddedMessage);
+	for(int i = 0; i < paddedLength; i++){
+		printf("%x ", paddedMessage[i]);
+	}
+	printf("%s -> %s\n", message, paddedMessage);
 }
