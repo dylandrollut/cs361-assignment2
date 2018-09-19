@@ -329,10 +329,32 @@ void encryptBlock(unsigned char* message, unsigned char* key, int algoNumRounds)
 	copyString(state, message);
 }
 
+void decryptBlock(unsigned char* message, unsigned char* key, int algoNumRounds){
+
+	unsigned char state[16];
+	int roundKeyIndex = algoNumRounds * 16;
+	copyString(message, state);
+
+	int numRounds = algoNumRounds - 1;
+
+	addRoundKey(state, key + roundKeyIndex);
+
+	for(int i = 0; i < numRounds; i++){
+		//invShiftRows(state);
+		//invSubBytes(state);
+		addRoundKey(state, key + (roundKeyIndex - (16 * (i + 1))));
+		//invMixColumns(state);
+	}
+
+	//invShiftRows(state);
+	//invSubBytes(state);
+	addRoundKey(state, key);
+}
+
 int main(){
 
-	unsigned char message[] = "Hello, World!!!!!";
-	unsigned char key[16] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p'};
+	unsigned char message[] = "Hello, World!!!!";
+	unsigned char key[] = "abcdefghijklmnop";
 
 	int numWords = 4;
 	int numRounds = 10;
@@ -358,11 +380,11 @@ int main(){
 		}
 	}
 
-	for(int i = 0; i < (paddedLength/16); i++)
-		encryptBlock(paddedMessage + (16*i), expandedKeys, numRounds);
+	//for(int i = 0; i < paddedLength; i += 16)
+	//	encryptBlock(paddedMessage + i, expandedKeys, numRounds);
 
-	for(int i = 0; i < paddedLength; i++){
-		printf("%x ", paddedMessage[i]);
-	}
-	printf("\n");
+	//for(int i = 0; i < paddedLength; i++){
+	//	printf("%x ", paddedMessage[i]);
+	//}
+	//printf("%s\n", paddedMessage);
 }
