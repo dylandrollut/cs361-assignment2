@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#define ENCRYPT 0
+#define DECRYPT 1
+
 // look up tables from wikipedia
 unsigned char s[256] = {
 	0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
@@ -418,26 +421,90 @@ void decryptBlock(unsigned char* message, unsigned char* key, int algoNumRounds)
 
 int main(int argc, char** argv){
 
-	char* inputFileName = "input.txt";
-	char* outputFileName = "output.txt";
-	char* keyFileName = "keyfile.txt";
+	char* inputFileName;
+	char* outputFileName;
+	char* keyFileName;
+	int mode;
+	int keySize;
+	int numWords;
+	int numRounds;
+
+	if(argc < 11){
+		printf("Invalid number of arguments\n");
+		return -1;
+	}
+
+	for(int i = 1; i < argc; i++){
+
+		if(!strcmp("--keysize", argv[i])){
+			i++;
+
+			if(!strcmp("128", argv[i])){
+				keySize = 16;
+				numWords = 4;
+				numRounds = 10;
+			} else if(!strcmp("256", argv[i])){
+				keySize = 32;
+				numWords = 8;
+				numRounds = 14;
+			} else {
+				printf("Invalid keysize, please input 128 or 256\n");
+				return -1;
+			}
+
+
+		} else if(!strcmp("--keyfile", argv[i])){
+
+			i++;
+			keyFileName = argv[i];
+
+		} else if(!strcmp("--inputfile", argv[i])){
+
+			i++;
+			inputFileName = argv[i];
+
+		} else if(!strcmp("--outputfile", argv[i])){
+
+			i++;
+			outputFileName = argv[i];
+
+		} else if(!strcmp("--mode", argv[i])){
+
+			i++;
+
+			if(!strcmp("encrypt", argv[i])){
+				mode = ENCRYPT;
+			} else if(!strcmp("decrypt", argv[i])){
+				mode = DECRYPT;
+			} else {
+				printf("Invalid mode, please input 'encrypt' or 'decrypt'\n");
+				return -1;
+			}
+
+		} else{
+			printf("Invalid argument option\n");
+			return -1;
+		}
+
+	}
 
 	FILE *keyFile;
 	keyFile = fopen(keyFileName, "rb");
 
-	unsigned char key[16];
+	unsigned char key[keySize];
 
 	if(!keyFile){
 		perror("Error opening key file");
 		return -1;
 	}
 
-	int numWords = 4;//8;
-	int numRounds = 10;//14;
 	unsigned char expandedKeys[(numRounds + 1)*16];
 
-	if(fread(key, 1, 16, keyFile) == 16){
+	if(fread(key, 1, keySize, keyFile) == keySize){
 		keyExpansion(key, expandedKeys, numWords, numRounds);
+	} else {
+		perror("Error reading keyfile");
+		return -1;
 	}
 
 	fclose(keyFile);
@@ -470,7 +537,11 @@ int main(int argc, char** argv){
 			}
 		}
 
-		encryptBlock(block, expandedKeys, numRounds);
+		if(mode == ENCRYPT){
+			encryptBlock(block, expandedKeys, numRounds);
+		} else {
+			decryptBlock(block, expandedKeys, numRounds);
+		}
 
 		for(int i = 0; i < 16; i++){
 			fputc(block[i], outputFile);
