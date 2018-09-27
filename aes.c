@@ -416,40 +416,56 @@ void decryptBlock(unsigned char* message, unsigned char* key, int algoNumRounds)
 	copyString(state, message);
 }
 
-int main(){
+int main(int argc, char** argv){
 
-	unsigned char message[] = {0x31, 0xc4, 0x47, 0xb7, 0xe0, 0xaf, 0xbd, 0x33, 0xed, 0xf9, 0x14, 0x25, 0x97, 0x38, 0x8c, 0xd6};//"Hello, World!!!!";
-	unsigned char key[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+	FILE *keyFile;
+	keyFile = fopen("keyfile.txt", "rb");
 
-	int numWords = 4;
-	int numRounds = 10;
+	unsigned char key[16];
+
+	if(!keyFile){
+		perror("Error opening key file");
+		return -1;
+	}
+
+	int numWords = 4//8;
+	int numRounds = 10//14;
 	unsigned char expandedKeys[(numRounds + 1)*16];
 
-	keyExpansion(key, expandedKeys, numWords, numRounds);
-
-	//message padding
-	int messageLength = strlen(message);
-	int paddedLength = messageLength;
-
-	if(paddedLength % 16 != 0){
-		paddedLength = (paddedLength / 16 + 1) * 16;
+	if(fgets(key, 17, keyFile)){
+		keyExpansion(key, expandedKeys, numWords, numRounds);
+	} else {
+		perror("Error getting key from key file");
+		return -1;
 	}
 
-	unsigned char paddedMessage[paddedLength];
+	FILE *inputFile;
 
-	for(int i = 0; i < paddedLength; i++){
-		if(i < messageLength){
-			paddedMessage[i] = message[i];
-		} else {
-			paddedMessage[i] = 0;
+	inputFile = fopen("input.txt", "rb");
+	if(!inputFile){
+		perror("Error opening input file");
+		return -1;
+	}
+
+	unsigned char block[16];
+
+	while(fgets(block, 17, inputFile)){
+
+		//message padding
+		if(strlen(block) % 16 != 0){
+			for(int i = 0; i < 16; i++){
+				if(i > strlen(block)){
+					block[i] = 0;
+				}
+			}
 		}
+
+		encryptBlock(block, expandedKeys, numRounds);
+		for(int i = 0; i < 16; i++){
+			printf("%x ", block[i]);
+		}
+		printf("\n");
 	}
 
-	for(int i = 0; i < paddedLength; i += 16)
-		decryptBlock(paddedMessage + i, expandedKeys, numRounds);
-
-	for(int i = 0; i < paddedLength; i++){
-		printf("%x ", paddedMessage[i]);
-	}
-	printf("%s -> %s\n", message, paddedMessage);
+	fclose(inputFile);
 }
