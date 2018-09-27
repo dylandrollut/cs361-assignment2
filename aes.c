@@ -418,8 +418,12 @@ void decryptBlock(unsigned char* message, unsigned char* key, int algoNumRounds)
 
 int main(int argc, char** argv){
 
+	char* inputFileName = "input.txt";
+	char* outputFileName = "output.txt";
+	char* keyFileName = "keyfile.txt";
+
 	FILE *keyFile;
-	keyFile = fopen("keyfile.txt", "rb");
+	keyFile = fopen(keyFileName, "rb");
 
 	unsigned char key[16];
 
@@ -428,44 +432,51 @@ int main(int argc, char** argv){
 		return -1;
 	}
 
-	int numWords = 4//8;
-	int numRounds = 10//14;
+	int numWords = 4;//8;
+	int numRounds = 10;//14;
 	unsigned char expandedKeys[(numRounds + 1)*16];
 
-	if(fgets(key, 17, keyFile)){
+	if(fread(key, 1, 16, keyFile) == 16){
 		keyExpansion(key, expandedKeys, numWords, numRounds);
-	} else {
-		perror("Error getting key from key file");
-		return -1;
 	}
 
-	FILE *inputFile;
+	fclose(keyFile);
 
-	inputFile = fopen("input.txt", "rb");
+	FILE *inputFile;
+	FILE *outputFile;
+
+	inputFile = fopen(inputFileName, "rb");
 	if(!inputFile){
 		perror("Error opening input file");
 		return -1;
 	}
 
+	outputFile = fopen(outputFileName, "wb");
+	if(!outputFile){
+		perror("Error opening output file");
+		return -1;
+	}
+
+	unsigned char buffer[17];
 	unsigned char block[16];
 
-	while(fgets(block, 17, inputFile)){
-
-		//message padding
-		if(strlen(block) % 16 != 0){
-			for(int i = 0; i < 16; i++){
-				if(i > strlen(block)){
-					block[i] = 0;
-				}
+	int read = 0;
+	while((read = fread(buffer, 1, 16, inputFile)) > 0){
+		for(int i = 0; i < 16; i++){
+			if(i >= read){
+				block[i] = 0;
+			} else {
+				block[i] = buffer[i];
 			}
 		}
 
 		encryptBlock(block, expandedKeys, numRounds);
+
 		for(int i = 0; i < 16; i++){
-			printf("%x ", block[i]);
+			fputc(block[i], outputFile);
 		}
-		printf("\n");
 	}
 
 	fclose(inputFile);
+	fclose(outputFile);
 }
